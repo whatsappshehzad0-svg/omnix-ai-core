@@ -4,6 +4,8 @@ import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { useToast } from "@/components/ui/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 import { 
   Send, 
   Mic, 
@@ -37,6 +39,7 @@ export const ChatInterface = ({ selectedMode }: ChatInterfaceProps) => {
   const [isListening, setIsListening] = useState(false);
   const [isTyping, setIsTyping] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const { toast } = useToast();
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -70,37 +73,61 @@ export const ChatInterface = ({ selectedMode }: ChatInterfaceProps) => {
     };
 
     setMessages(prev => [...prev, userMessage]);
+    const currentInput = input;
     setInput("");
     setIsTyping(true);
 
-    // Simulate AI response
-    setTimeout(() => {
+    try {
+      // Prepare conversation history for API
+      const conversationHistory = messages.map(msg => ({
+        role: msg.role,
+        content: msg.content
+      }));
+
+      // Call the OpenAI edge function
+      const { data, error } = await supabase.functions.invoke('ai-chat', {
+        body: {
+          message: currentInput,
+          conversationHistory: conversationHistory
+        }
+      });
+
+      if (error) {
+        throw new Error(error.message || 'Failed to get AI response');
+      }
+
       const aiResponse: Message = {
         id: (Date.now() + 1).toString(),
-        content: generateAIResponse(input, selectedMode),
+        content: data.response,
         role: 'assistant',
         timestamp: new Date(),
         mode: selectedMode || undefined
       };
+
       setMessages(prev => [...prev, aiResponse]);
+      
+    } catch (error: any) {
+      console.error('Error sending message:', error);
+      
+      toast({
+        title: "Error",
+        description: error.message || "Failed to send message. Please try again.",
+        variant: "destructive",
+      });
+
+      // Add error message to chat
+      const errorMessage: Message = {
+        id: (Date.now() + 1).toString(),
+        content: "I apologize, but I'm having trouble processing your request right now. Please try again.",
+        role: 'assistant',
+        timestamp: new Date(),
+        mode: selectedMode || undefined
+      };
+      
+      setMessages(prev => [...prev, errorMessage]);
+    } finally {
       setIsTyping(false);
-    }, 1500);
-  };
-
-  const generateAIResponse = (userInput: string, mode: string | null): string => {
-    const responses = {
-      summarize: `Here's a concise summary of your request: "${userInput}". I've identified the key points and condensed them for better understanding.`,
-      translate: `Translation complete. I've processed your text and can translate it to any language you specify.`,
-      'explain-simple': `Let me explain this in simple terms: ${userInput}. Think of it as...`,
-      'explain-deep': `Here's a detailed technical explanation: ${userInput} involves multiple layers of complexity...`,
-      code: `// Code solution for: ${userInput}\nfunction solution() {\n  // Implementation here\n  return result;\n}`,
-      calculator: `Calculating: ${userInput}\nResult: Processing mathematical operation...`,
-      news: `Latest news update regarding: ${userInput}. Here's what's happening...`,
-      weather: `Weather information for: ${userInput}. Current conditions and forecast...`,
-      default: `I understand you're asking about: "${userInput}". Let me provide you with a comprehensive response based on my knowledge across all domains.`
-    };
-
-    return responses[mode as keyof typeof responses] || responses.default;
+    }
   };
 
   const toggleVoiceInput = () => {
