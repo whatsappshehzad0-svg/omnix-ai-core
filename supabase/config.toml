@@ -2,3 +2,9 @@ project_id = "pajhhdhwbowgxfekittt"
 
 [functions.ai-chat]
 verify_jwt = false
+
+[functions.eleven-labs-stt]
+verify_jwt = false
+
+[functions.eleven-labs-tts]
+verify_jwt = false

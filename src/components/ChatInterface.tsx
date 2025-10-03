@@ -12,14 +12,15 @@ import {
   MicOff, 
   Download, 
   Search, 
-  ThumbsUp, 
-  ThumbsDown, 
-  Copy, 
-  RotateCcw,
+  Volume2,
+  VolumeX,
+  Loader2,
   Sparkles
 } from "lucide-react";
 import { ChatMessage } from "@/components/ChatMessage";
 import { ChatSidebar } from "@/components/ChatSidebar";
+import { useVoiceRecording } from "@/hooks/useVoiceRecording";
+import { useTextToSpeech } from "@/hooks/useTextToSpeech";
 
 interface Message {
   id: string;
@@ -36,10 +37,12 @@ interface ChatInterfaceProps {
 export const ChatInterface = ({ selectedMode }: ChatInterfaceProps) => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
-  const [isListening, setIsListening] = useState(false);
   const [isTyping, setIsTyping] = useState(false);
+  const [autoSpeak, setAutoSpeak] = useState(true);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
+  const { isRecording, isProcessing, startRecording, stopRecording } = useVoiceRecording();
+  const { speak, stop: stopSpeaking, isSpeaking } = useTextToSpeech();
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -106,6 +109,15 @@ export const ChatInterface = ({ selectedMode }: ChatInterfaceProps) => {
 
       setMessages(prev => [...prev, aiResponse]);
       
+      // Auto-play voice response if enabled
+      if (autoSpeak && data.response) {
+        try {
+          await speak(data.response);
+        } catch (voiceError) {
+          console.error('Error playing voice response:', voiceError);
+        }
+      }
+      
     } catch (error: any) {
       console.error('Error sending message:', error);
       
@@ -130,9 +142,38 @@ export const ChatInterface = ({ selectedMode }: ChatInterfaceProps) => {
     }
   };
 
-  const toggleVoiceInput = () => {
-    setIsListening(!isListening);
-    // Voice recognition implementation would go here
+  const toggleVoiceInput = async () => {
+    if (isRecording) {
+      try {
+        const transcribedText = await stopRecording();
+        if (transcribedText) {
+          setInput(transcribedText);
+        }
+      } catch (error: any) {
+        toast({
+          title: "Voice Error",
+          description: error.message || "Failed to process voice input",
+          variant: "destructive",
+        });
+      }
+    } else {
+      try {
+        await startRecording();
+      } catch (error: any) {
+        toast({
+          title: "Microphone Error",
+          description: error.message || "Failed to access microphone",
+          variant: "destructive",
+        });
+      }
+    }
+  };
+
+  const toggleAutoSpeak = () => {
+    if (isSpeaking) {
+      stopSpeaking();
+    }
+    setAutoSpeak(!autoSpeak);
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
@@ -169,6 +210,15 @@ export const ChatInterface = ({ selectedMode }: ChatInterfaceProps) => {
                   {selectedMode.replace('-', ' ')}
                 </Badge>
               )}
+              <Button 
+                variant="ghost" 
+                size="sm"
+                onClick={toggleAutoSpeak}
+                className={autoSpeak ? "text-primary" : "text-muted-foreground"}
+                title={autoSpeak ? "Disable voice responses" : "Enable voice responses"}
+              >
+                {autoSpeak ? <Volume2 className="h-4 w-4" /> : <VolumeX className="h-4 w-4" />}
+              </Button>
               <Button variant="ghost" size="sm">
                 <Search className="h-4 w-4" />
               </Button>
@@ -219,9 +269,17 @@ export const ChatInterface = ({ selectedMode }: ChatInterfaceProps) => {
                   variant="ghost"
                   size="sm"
                   onClick={toggleVoiceInput}
-                  className={isListening ? "text-primary" : "text-muted-foreground"}
+                  disabled={isProcessing}
+                  className={isRecording ? "text-primary animate-pulse" : "text-muted-foreground"}
+                  title={isRecording ? "Stop recording" : "Start voice input"}
                 >
-                  {isListening ? <Mic className="h-4 w-4" /> : <MicOff className="h-4 w-4" />}
+                  {isProcessing ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : isRecording ? (
+                    <Mic className="h-4 w-4" />
+                  ) : (
+                    <MicOff className="h-4 w-4" />
+                  )}
                 </Button>
               </div>
             </div>
