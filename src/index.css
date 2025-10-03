@@ -101,13 +101,17 @@
   /* Mode Box Styles */
   .mode-box {
     @apply relative overflow-hidden rounded-xl border border-border/50 bg-card/50 backdrop-blur-sm;
-    @apply p-6 transition-all duration-300 hover:scale-105 hover:border-primary/50;
+    @apply p-4 md:p-5 transition-all duration-300 hover:scale-105 hover:border-primary/50;
     @apply cursor-pointer;
     background: linear-gradient(135deg, hsl(var(--card)), hsl(var(--muted)));
+    min-height: 160px;
+    margin: 10px;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
   }
   
   .mode-box:hover {
-    box-shadow: 0 8px 32px hsl(var(--primary) / 0.2);
+    box-shadow: 0 0 20px hsl(var(--primary) / 0.3);
+    transform: translateY(-4px) scale(1.02);
   }
   
   .mode-box::before {

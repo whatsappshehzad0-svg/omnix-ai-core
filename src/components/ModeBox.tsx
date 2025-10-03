@@ -23,7 +23,7 @@ export const ModeBox = ({ title, description, gradient, onClick, delay = 0 }: Mo
   return (
     <div
       className={cn(
-        "mode-box transform transition-all duration-500",
+        "mode-box transform transition-all duration-500 hover:scale-105",
         isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"
       )}
       onClick={onClick}
@@ -37,13 +37,13 @@ export const ModeBox = ({ title, description, gradient, onClick, delay = 0 }: Mo
       {/* Content */}
       <div className="relative z-10 space-y-3">
         <div className="flex items-start justify-between">
-          <h3 className="text-lg font-semibold text-foreground group-hover:text-primary transition-colors">
+          <h3 className="text-xl font-bold text-foreground group-hover:text-primary transition-colors leading-relaxed">
             {title}
           </h3>
           <div className="w-2 h-2 rounded-full bg-primary animate-pulse" />
         </div>
         
-        <p className="text-sm text-muted-foreground leading-relaxed">
+        <p className="text-sm text-muted-foreground leading-[1.5] break-words">
           {description}
         </p>
         
