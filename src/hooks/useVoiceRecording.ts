@@ -17,8 +17,18 @@ export const useVoiceRecording = () => {
         } 
       });
 
+      // Check for supported mime types
+      let mimeType = 'audio/webm';
+      if (!MediaRecorder.isTypeSupported('audio/webm')) {
+        if (MediaRecorder.isTypeSupported('audio/mp4')) {
+          mimeType = 'audio/mp4';
+        } else if (MediaRecorder.isTypeSupported('audio/ogg')) {
+          mimeType = 'audio/ogg';
+        }
+      }
+
       const mediaRecorder = new MediaRecorder(stream, {
-        mimeType: 'audio/webm',
+        mimeType: mimeType,
       });
 
       chunksRef.current = [];
@@ -54,7 +64,10 @@ export const useVoiceRecording = () => {
           setIsProcessing(true);
           console.log('Recording stopped, processing...');
 
-          const audioBlob = new Blob(chunksRef.current, { type: 'audio/webm' });
+          const mimeType = mediaRecorder.mimeType || 'audio/webm';
+          const audioBlob = new Blob(chunksRef.current, { type: mimeType });
+          
+          console.log('Audio blob created:', audioBlob.size, 'bytes, type:', mimeType);
           
           // Convert blob to base64
           const reader = new FileReader();
