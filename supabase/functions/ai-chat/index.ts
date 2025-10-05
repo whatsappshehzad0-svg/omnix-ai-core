@@ -13,10 +13,10 @@ serve(async (req) => {
   }
 
   try {
-    const { message, conversationHistory } = await req.json();
+    const { message, conversationHistory, fileContent } = await req.json();
     
-    if (!message) {
-      throw new Error('Message is required');
+    if (!message && !fileContent) {
+      throw new Error('Message or file content is required');
     }
 
     const OPENAI_API_KEY = Deno.env.get('OPENAI_API_KEY');
@@ -80,7 +80,10 @@ Always provide helpful, accurate responses while maintaining a respectful and pa
       ...(conversationHistory || []),
       {
         role: 'user',
-        content: message
+        content: fileContent ? [
+          { type: 'text', text: message || 'Please analyze this document.' },
+          ...(Array.isArray(fileContent) ? fileContent : [fileContent])
+        ] : message
       }
     ];
 

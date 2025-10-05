@@ -15,7 +15,8 @@ import {
   Volume2,
   VolumeX,
   Loader2,
-  Sparkles
+  Sparkles,
+  FileText
 } from "lucide-react";
 import { ChatMessage } from "@/components/ChatMessage";
 import { ChatSidebar } from "@/components/ChatSidebar";
@@ -39,7 +40,9 @@ export const ChatInterface = ({ selectedMode }: ChatInterfaceProps) => {
   const [input, setInput] = useState("");
   const [isTyping, setIsTyping] = useState(false);
   const [autoSpeak, setAutoSpeak] = useState(true);
+  const [uploadedFiles, setUploadedFiles] = useState<Array<{name: string, type: string, content: any}>>([]);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
   const { isRecording, isProcessing, startRecording, stopRecording } = useVoiceRecording();
   const { speak, stop: stopSpeaking, isSpeaking } = useTextToSpeech();
@@ -65,12 +68,60 @@ export const ChatInterface = ({ selectedMode }: ChatInterfaceProps) => {
     }
   }, [selectedMode]);
 
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+
+    const newFiles: Array<{name: string, type: string, content: any}> = [];
+
+    for (const file of Array.from(files)) {
+      if (file.type === 'application/pdf') {
+        const reader = new FileReader();
+        reader.onload = async (event) => {
+          const base64 = event.target?.result as string;
+          newFiles.push({
+            name: file.name,
+            type: 'pdf',
+            content: { type: 'text', text: `[PDF Document: ${file.name}]\n\nPlease analyze this document and provide insights in Hindi.` }
+          });
+          setUploadedFiles(prev => [...prev, ...newFiles]);
+        };
+        reader.readAsDataURL(file);
+      } else if (file.type.startsWith('image/')) {
+        const reader = new FileReader();
+        reader.onload = (event) => {
+          const base64 = event.target?.result as string;
+          newFiles.push({
+            name: file.name,
+            type: 'image',
+            content: { type: 'image_url', image_url: { url: base64 } }
+          });
+          setUploadedFiles(prev => [...prev, ...newFiles]);
+        };
+        reader.readAsDataURL(file);
+      }
+    }
+
+    toast({
+      title: "Files uploaded",
+      description: `${files.length} file(s) ready to analyze`,
+    });
+  };
+
   const sendMessage = async () => {
-    if (!input.trim()) return;
+    if (!input.trim() && uploadedFiles.length === 0) return;
+
+    const fileContent = uploadedFiles.length > 0 
+      ? uploadedFiles.map(f => f.content)
+      : null;
+
+    const displayMessage = uploadedFiles.length > 0
+      ? `${input}\n\n📎 Uploaded: ${uploadedFiles.map(f => f.name).join(', ')}`
+      : input;
 
     const userMessage: Message = {
       id: Date.now().toString(),
-      content: input,
+      content: displayMessage,
       role: 'user',
       timestamp: new Date()
     };
@@ -78,19 +129,19 @@ export const ChatInterface = ({ selectedMode }: ChatInterfaceProps) => {
     setMessages(prev => [...prev, userMessage]);
     const currentInput = input;
     setInput("");
+    setUploadedFiles([]);
     setIsTyping(true);
 
     try {
-      // Prepare conversation history for API
       const conversationHistory = messages.map(msg => ({
         role: msg.role,
         content: msg.content
       }));
 
-      // Call the OpenAI edge function
       const { data, error } = await supabase.functions.invoke('ai-chat', {
         body: {
-          message: currentInput,
+          message: currentInput || 'Please analyze this document.',
+          fileContent,
           conversationHistory: conversationHistory
         }
       });
@@ -109,7 +160,6 @@ export const ChatInterface = ({ selectedMode }: ChatInterfaceProps) => {
 
       setMessages(prev => [...prev, aiResponse]);
       
-      // Auto-play voice response if enabled
       if (autoSpeak && data.response) {
         try {
           await speak(data.response);
@@ -127,7 +177,6 @@ export const ChatInterface = ({ selectedMode }: ChatInterfaceProps) => {
         variant: "destructive",
       });
 
-      // Add error message to chat
       const errorMessage: Message = {
         id: (Date.now() + 1).toString(),
         content: "I apologize, but I'm having trouble processing your request right now. Please try again.",
@@ -255,13 +304,49 @@ export const ChatInterface = ({ selectedMode }: ChatInterfaceProps) => {
 
         {/* Input Area */}
         <Card className="mt-4 p-4 glass border-border/50">
+          {uploadedFiles.length > 0 && (
+            <div className="mb-3 flex flex-wrap gap-2">
+              {uploadedFiles.map((file, idx) => (
+                <div key={idx} className="flex items-center gap-2 bg-secondary/50 px-3 py-1.5 rounded-lg border border-border/50">
+                  <FileText className="h-3.5 w-3.5 text-primary" />
+                  <span className="text-xs font-medium">{file.name}</span>
+                  <button
+                    onClick={() => setUploadedFiles(prev => prev.filter((_, i) => i !== idx))}
+                    className="ml-1 text-muted-foreground hover:text-foreground transition-colors"
+                  >
+                    ×
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+          
           <div className="flex items-end space-x-2">
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept=".pdf,image/*"
+              multiple
+              onChange={handleFileUpload}
+              className="hidden"
+            />
+            
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => fileInputRef.current?.click()}
+              title="Upload PDF or Image"
+              className="text-muted-foreground hover:text-primary"
+            >
+              <FileText className="h-4 w-4" />
+            </Button>
+            
             <div className="flex-1 relative">
               <Input
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 onKeyPress={handleKeyPress}
-                placeholder="Ask OMNIX anything..."
+                placeholder="Upload a document or type your message..."
                 className="pr-20 bg-background/50 border-border/50 focus:border-primary/50"
               />
               <div className="absolute right-2 top-1/2 transform -translate-y-1/2 flex space-x-1">
@@ -286,7 +371,7 @@ export const ChatInterface = ({ selectedMode }: ChatInterfaceProps) => {
             
             <Button 
               onClick={sendMessage}
-              disabled={!input.trim()}
+              disabled={!input.trim() && uploadedFiles.length === 0}
               className="bg-gradient-primary hover:opacity-90 text-primary-foreground"
             >
               <Send className="h-4 w-4" />
@@ -294,7 +379,7 @@ export const ChatInterface = ({ selectedMode }: ChatInterfaceProps) => {
           </div>
           
           <div className="flex items-center justify-between mt-2 text-xs text-muted-foreground">
-            <span>Press Enter to send, Shift+Enter for new line</span>
+            <span>📎 Upload PDF/images or type your legal query</span>
             <span>{input.length}/2000</span>
           </div>
         </Card>
