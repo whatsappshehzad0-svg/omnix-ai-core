@@ -22,6 +22,7 @@ import { ChatMessage } from "@/components/ChatMessage";
 import { ChatSidebar } from "@/components/ChatSidebar";
 import { useVoiceRecording } from "@/hooks/useVoiceRecording";
 import { useTextToSpeech } from "@/hooks/useTextToSpeech";
+import { ImageGenerator } from "@/components/ImageGenerator";
 
 interface Message {
   id: string;
@@ -381,6 +382,11 @@ export const ChatInterface = ({ selectedMode }: ChatInterfaceProps) => {
           <div className="flex items-center justify-between mt-2 text-xs text-muted-foreground">
             <span>📎 Upload PDF/images or type your legal query</span>
             <span>{input.length}/2000</span>
+          </div>
+          
+          <div className="mt-4 pt-4 border-t border-border/50">
+            <h4 className="text-sm font-medium mb-2 text-foreground">Generate Legal Diagram</h4>
+            <ImageGenerator />
           </div>
         </Card>
       </div>
