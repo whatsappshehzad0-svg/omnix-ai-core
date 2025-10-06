@@ -50,12 +50,19 @@ serve(async (req) => {
     }
 
     const data = await response.json();
-    console.log('Image generation response received');
+    console.log('Full AI Gateway response:', JSON.stringify(data));
 
+    // Extract image from response
     const imageUrl = data.choices?.[0]?.message?.images?.[0]?.image_url?.url;
-
+    
     if (!imageUrl) {
-      throw new Error('No image generated');
+      console.error('Response structure:', {
+        hasChoices: !!data.choices,
+        hasMessage: !!data.choices?.[0]?.message,
+        hasImages: !!data.choices?.[0]?.message?.images,
+        messageContent: data.choices?.[0]?.message
+      });
+      throw new Error('No image URL in response');
     }
 
     return new Response(JSON.stringify({ 
