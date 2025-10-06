@@ -12,7 +12,7 @@ serve(async (req) => {
   }
 
   try {
-    const { prompt } = await req.json();
+    const { prompt, imageUrl } = await req.json();
     
     if (!prompt) {
       throw new Error('Prompt is required');
@@ -25,6 +25,25 @@ serve(async (req) => {
 
     console.log('Generating image with prompt:', prompt);
 
+    // Build message content based on whether image is provided
+    let messageContent;
+    if (imageUrl) {
+      messageContent = [
+        {
+          type: 'text',
+          text: prompt
+        },
+        {
+          type: 'image_url',
+          image_url: {
+            url: imageUrl
+          }
+        }
+      ];
+    } else {
+      messageContent = prompt;
+    }
+
     const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
       method: 'POST',
       headers: {
@@ -36,7 +55,7 @@ serve(async (req) => {
         messages: [
           {
             role: 'user',
-            content: prompt
+            content: messageContent
           }
         ],
         modalities: ['image', 'text']
