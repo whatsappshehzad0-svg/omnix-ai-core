@@ -1,28 +1,23 @@
 import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { 
-  Send, 
-  Mic, 
-  MicOff, 
   Download, 
   Search, 
   Volume2,
   VolumeX,
-  Loader2,
-  Sparkles,
-  FileText
+  Sparkles
 } from "lucide-react";
 import { ChatMessage } from "@/components/ChatMessage";
 import { ChatSidebar } from "@/components/ChatSidebar";
 import { useVoiceRecording } from "@/hooks/useVoiceRecording";
 import { useTextToSpeech } from "@/hooks/useTextToSpeech";
-import { ImageGenerator } from "@/components/ImageGenerator";
+import { UnifiedInput } from "@/components/UnifiedInput";
+import { toast as sonnerToast } from 'sonner';
 
 interface Message {
   id: string;
@@ -42,8 +37,14 @@ export const ChatInterface = ({ selectedMode }: ChatInterfaceProps) => {
   const [isTyping, setIsTyping] = useState(false);
   const [autoSpeak, setAutoSpeak] = useState(true);
   const [uploadedFiles, setUploadedFiles] = useState<Array<{name: string, type: string, content: any}>>([]);
+  
+  // Image generation states
+  const [imagePrompt, setImagePrompt] = useState('');
+  const [generatedImage, setGeneratedImage] = useState<string | null>(null);
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [uploadedImage, setUploadedImage] = useState<string | null>(null);
+  
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
   const { isRecording, isProcessing, startRecording, stopRecording } = useVoiceRecording();
   const { speak, stop: stopSpeaking, isSpeaking } = useTextToSpeech();
@@ -233,6 +234,53 @@ export const ChatInterface = ({ selectedMode }: ChatInterfaceProps) => {
     }
   };
 
+  // Image generation handlers
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith('image/')) {
+      sonnerToast.error('Please upload an image file');
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setUploadedImage(reader.result as string);
+      sonnerToast.success('Image uploaded');
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleImageGenerate = async () => {
+    if (!imagePrompt.trim()) {
+      sonnerToast.error('Please enter a prompt');
+      return;
+    }
+
+    setIsGenerating(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('generate-image', {
+        body: { 
+          prompt: imagePrompt,
+          imageUrl: uploadedImage 
+        }
+      });
+
+      if (error) throw error;
+
+      if (data.imageUrl) {
+        setGeneratedImage(data.imageUrl);
+        sonnerToast.success('Image generated successfully!');
+      }
+    } catch (error) {
+      console.error('Error generating image:', error);
+      sonnerToast.error('Failed to generate image');
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
   return (
     <div className="flex h-[calc(100vh-200px)] gap-6 animate-fade-in">
       {/* Chat Sidebar */}
@@ -305,89 +353,36 @@ export const ChatInterface = ({ selectedMode }: ChatInterfaceProps) => {
 
         {/* Input Area */}
         <Card className="mt-4 p-4 glass border-border/50">
-          {uploadedFiles.length > 0 && (
-            <div className="mb-3 flex flex-wrap gap-2">
-              {uploadedFiles.map((file, idx) => (
-                <div key={idx} className="flex items-center gap-2 bg-secondary/50 px-3 py-1.5 rounded-lg border border-border/50">
-                  <FileText className="h-3.5 w-3.5 text-primary" />
-                  <span className="text-xs font-medium">{file.name}</span>
-                  <button
-                    onClick={() => setUploadedFiles(prev => prev.filter((_, i) => i !== idx))}
-                    className="ml-1 text-muted-foreground hover:text-foreground transition-colors"
-                  >
-                    ×
-                  </button>
-                </div>
-              ))}
+          <UnifiedInput
+            chatInput={input}
+            setChatInput={setInput}
+            onChatSend={sendMessage}
+            onChatKeyPress={handleKeyPress}
+            isTyping={isTyping}
+            uploadedFiles={uploadedFiles}
+            setUploadedFiles={setUploadedFiles}
+            onFileUpload={handleFileUpload}
+            isRecording={isRecording}
+            isProcessing={isProcessing}
+            toggleVoiceInput={toggleVoiceInput}
+            imagePrompt={imagePrompt}
+            setImagePrompt={setImagePrompt}
+            onImageGenerate={handleImageGenerate}
+            isGenerating={isGenerating}
+            uploadedImage={uploadedImage}
+            setUploadedImage={setUploadedImage}
+            onImageUpload={handleImageUpload}
+          />
+          
+          {generatedImage && (
+            <div className="mt-4 rounded-lg overflow-hidden border">
+              <img 
+                src={generatedImage} 
+                alt={imagePrompt}
+                className="w-full h-auto"
+              />
             </div>
           )}
-          
-          <div className="flex items-end space-x-2">
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept=".pdf,image/*"
-              multiple
-              onChange={handleFileUpload}
-              className="hidden"
-            />
-            
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => fileInputRef.current?.click()}
-              title="Upload PDF or Image"
-              className="text-muted-foreground hover:text-primary"
-            >
-              <FileText className="h-4 w-4" />
-            </Button>
-            
-            <div className="flex-1 relative">
-              <Input
-                value={input}
-                onChange={(e) => setInput(e.target.value)}
-                onKeyPress={handleKeyPress}
-                placeholder="Upload a document or type your message..."
-                className="pr-20 bg-background/50 border-border/50 focus:border-primary/50"
-              />
-              <div className="absolute right-2 top-1/2 transform -translate-y-1/2 flex space-x-1">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={toggleVoiceInput}
-                  disabled={isProcessing}
-                  className={isRecording ? "text-primary animate-pulse" : "text-muted-foreground"}
-                  title={isRecording ? "Stop recording" : "Start voice input"}
-                >
-                  {isProcessing ? (
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                  ) : isRecording ? (
-                    <Mic className="h-4 w-4" />
-                  ) : (
-                    <MicOff className="h-4 w-4" />
-                  )}
-                </Button>
-              </div>
-            </div>
-            
-            <Button 
-              onClick={sendMessage}
-              disabled={!input.trim() && uploadedFiles.length === 0}
-              className="bg-gradient-primary hover:opacity-90 text-primary-foreground"
-            >
-              <Send className="h-4 w-4" />
-            </Button>
-          </div>
-          
-          <div className="flex items-center justify-between mt-2 text-xs text-muted-foreground">
-            <span>📎 Upload PDF/images or type your legal query</span>
-            <span>{input.length}/2000</span>
-          </div>
-          
-          <div className="mt-4 pt-4 border-t border-border/50">
-            <h4 className="text-sm font-medium mb-2 text-foreground">Generate Legal Diagram</h4>
-            <ImageGenerator />
-          </div>
         </Card>
       </div>
     </div>
