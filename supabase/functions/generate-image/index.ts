@@ -72,9 +72,9 @@ serve(async (req) => {
     console.log('Full AI Gateway response:', JSON.stringify(data));
 
     // Extract image from response
-    const imageUrl = data.choices?.[0]?.message?.images?.[0]?.image_url?.url;
+    const generatedImageUrl = data.choices?.[0]?.message?.images?.[0]?.image_url?.url;
     
-    if (!imageUrl) {
+    if (!generatedImageUrl) {
       console.error('Response structure:', {
         hasChoices: !!data.choices,
         hasMessage: !!data.choices?.[0]?.message,
@@ -85,7 +85,7 @@ serve(async (req) => {
     }
 
     return new Response(JSON.stringify({ 
-      imageUrl,
+      imageUrl: generatedImageUrl,
       prompt 
     }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
