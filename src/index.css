@@ -6,59 +6,63 @@
 
 @layer base {
   :root {
-    /* Core Background Colors - Deep Navy & Black */
-    --background: 220 40% 5%;
-    --foreground: 210 40% 98%;
+    /* Core Background Colors */
+    --background: 220 25% 6%;
+    --foreground: 180 100% 90%;
     
     /* Card & Surface Colors */
-    --card: 220 30% 8%;
-    --card-foreground: 210 40% 98%;
-    --popover: 220 30% 8%;
-    --popover-foreground: 210 40% 98%;
-    --glass: 220 30% 8% / 0.6;
+    --card: 220 25% 8%;
+    --card-foreground: 180 100% 90%;
+    --glass: 220 25% 10% / 0.6;
     
-    /* Primary Colors - Neon Cyan */
+    /* Primary Colors - Cyan/Blue Theme */
     --primary: 180 100% 50%;
-    --primary-foreground: 220 40% 5%;
-    --primary-glow: 180 100% 65%;
+    --primary-foreground: 220 25% 6%;
+    --primary-glow: 180 100% 70%;
     
-    /* Secondary Colors - Purple Accent */
-    --secondary: 270 100% 65%;
-    --secondary-foreground: 210 40% 98%;
+    /* Secondary Colors */
+    --secondary: 220 25% 12%;
+    --secondary-foreground: 180 80% 80%;
     
-    /* Accent Colors - Purple/Cyan Mix */
-    --accent: 270 100% 65%;
-    --accent-foreground: 210 40% 98%;
-    --accent-glow: 280 100% 75%;
+    /* Accent Colors */
+    --accent: 200 100% 55%;
+    --accent-foreground: 220 25% 6%;
+    --accent-glow: 200 100% 75%;
     
     /* Muted Colors */
-    --muted: 220 20% 20%;
-    --muted-foreground: 215 20% 65%;
+    --muted: 220 20% 15%;
+    --muted-foreground: 180 30% 60%;
     
     /* Interactive Elements */
-    --border: 220 30% 15%;
-    --input: 220 30% 12%;
+    --border: 220 25% 20%;
+    --input: 220 25% 12%;
     --ring: 180 100% 50%;
     
     /* Special Effects */
-    --destructive: 0 70% 50%;
-    --destructive-foreground: 210 40% 98%;
-    --success: 142 76% 45%;
-    --warning: 38 92% 50%;
+    --destructive: 0 85% 60%;
+    --destructive-foreground: 0 0% 98%;
+    --success: 120 60% 50%;
+    --warning: 45 100% 60%;
     
-    --radius: 1rem;
+    /* Gradients */
+    --gradient-primary: linear-gradient(135deg, hsl(180 100% 50%), hsl(200 100% 60%));
+    --gradient-secondary: linear-gradient(135deg, hsl(220 25% 8%), hsl(220 25% 12%));
+    --gradient-glow: linear-gradient(135deg, hsl(180 100% 50% / 0.2), hsl(200 100% 60% / 0.2));
     
-    /* Gradients - Futuristic */
-    --gradient-primary: linear-gradient(135deg, hsl(220 40% 5%), hsl(220 30% 8%), hsl(220 40% 5%));
-    --gradient-secondary: linear-gradient(135deg, hsl(180 100% 50% / 0.1), hsl(270 100% 65% / 0.1));
-    --gradient-glow: radial-gradient(circle at 50% 0%, hsl(180 100% 50% / 0.15), hsl(270 100% 65% / 0.1), transparent 70%);
-    --gradient-accent: linear-gradient(135deg, hsl(180 100% 50%), hsl(270 100% 65%));
+    /* Shadows & Glows */
+    --shadow-glow: 0 0 20px hsl(180 100% 50% / 0.3);
+    --shadow-glow-strong: 0 0 40px hsl(180 100% 50% / 0.5);
+    --shadow-card: 0 8px 32px hsl(220 25% 4% / 0.5);
     
-    /* Shadows & Glows - Neon Effects */
-    --shadow-glow: 0 0 40px hsl(180 100% 50% / 0.3), 0 0 80px hsl(270 100% 65% / 0.2);
-    --shadow-glow-strong: 0 0 60px hsl(180 100% 50% / 0.5), 0 0 100px hsl(270 100% 65% / 0.3);
-    --shadow-card: 0 8px 32px hsl(0 0% 0% / 0.6);
-    --shadow-neon: 0 0 20px hsl(180 100% 50% / 0.4);
+    /* Animations */
+    --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-glow: box-shadow 0.3s ease-in-out;
+    
+    --radius: 0.75rem;
+    
+    /* Popover */
+    --popover: 220 25% 8%;
+    --popover-foreground: 180 100% 90%;
   }
 }
 
