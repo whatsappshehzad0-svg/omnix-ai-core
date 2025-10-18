@@ -57,11 +57,13 @@ export default {
         'gradient-primary': 'var(--gradient-primary)',
         'gradient-secondary': 'var(--gradient-secondary)',
         'gradient-glow': 'var(--gradient-glow)',
+        'gradient-accent': 'var(--gradient-accent)',
       },
       boxShadow: {
         'glow': 'var(--shadow-glow)',
         'glow-strong': 'var(--shadow-glow-strong)',
         'card': 'var(--shadow-card)',
+        'neon': 'var(--shadow-neon)',
       },
       transitionProperty: {
         'glow': 'box-shadow',
