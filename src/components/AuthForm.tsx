@@ -4,7 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Brain, Eye, EyeOff, Shield, Zap } from "lucide-react";
+import { Sparkles, Eye, EyeOff, Shield, Zap } from "lucide-react";
 
 interface AuthFormProps {
   onLogin: () => void;
@@ -36,24 +36,30 @@ export const AuthForm = ({ onLogin }: AuthFormProps) => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background p-4">
-      <div className="w-full max-w-md space-y-6 animate-fade-in">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-primary p-4 relative overflow-hidden">
+      {/* Background glow effects */}
+      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-96 h-96 bg-gradient-glow opacity-40 blur-3xl pointer-events-none" />
+      <div className="absolute bottom-0 right-0 w-64 h-64 bg-gradient-accent opacity-10 blur-3xl pointer-events-none" />
+      
+      <div className="w-full max-w-md space-y-6 animate-fade-in relative z-10">
         {/* Header */}
         <div className="text-center space-y-4">
-          <div className="relative mx-auto w-16 h-16 flex items-center justify-center">
-            <Brain className="h-12 w-12 text-primary animate-glow-pulse" />
-            <div className="absolute inset-0 rounded-full bg-primary/20 animate-ping" />
+          <div className="relative mx-auto w-20 h-20 flex items-center justify-center">
+            <div className="w-16 h-16 rounded-2xl bg-gradient-accent flex items-center justify-center shadow-glow-strong">
+              <Sparkles className="h-8 w-8 text-background" />
+            </div>
+            <div className="absolute inset-0 rounded-2xl bg-primary/20 animate-ping" />
           </div>
           <div>
-            <h1 className="text-3xl font-bold bg-gradient-primary bg-clip-text text-transparent">
-              OMNIX
+            <h1 className="text-4xl font-bold bg-gradient-accent bg-clip-text text-transparent">
+              Omnix AI
             </h1>
-            <p className="text-muted-foreground">All across everything</p>
+            <p className="text-muted-foreground">Futuristic Intelligence</p>
           </div>
         </div>
 
         {/* Auth Form */}
-        <Card className="p-6 glass border-border/50">
+        <Card className="p-6 glass border border-primary/20 backdrop-blur-xl bg-gradient-secondary">
           <Tabs defaultValue="login" className="space-y-4">
             <TabsList className="grid w-full grid-cols-2">
               <TabsTrigger value="login">Login</TabsTrigger>
@@ -103,15 +109,15 @@ export const AuthForm = ({ onLogin }: AuthFormProps) => {
                 <Button
                   type="submit"
                   disabled={isLoading}
-                  className="w-full bg-gradient-primary hover:opacity-90 text-primary-foreground"
+                  className="w-full bg-gradient-accent hover:opacity-90 text-background font-semibold shadow-glow border-0"
                 >
                   {isLoading ? (
                     <div className="flex items-center gap-2">
-                      <div className="w-4 h-4 border-2 border-primary-foreground/30 border-t-primary-foreground rounded-full animate-spin" />
+                      <div className="w-4 h-4 border-2 border-background/30 border-t-background rounded-full animate-spin" />
                       Logging in...
                     </div>
                   ) : (
-                    "Login to OMNIX"
+                    "Login to Omnix AI"
                   )}
                 </Button>
               </form>
@@ -186,15 +192,15 @@ export const AuthForm = ({ onLogin }: AuthFormProps) => {
                 <Button
                   type="submit"
                   disabled={isLoading}
-                  className="w-full bg-gradient-primary hover:opacity-90 text-primary-foreground"
+                  className="w-full bg-gradient-accent hover:opacity-90 text-background font-semibold shadow-glow border-0"
                 >
                   {isLoading ? (
                     <div className="flex items-center gap-2">
-                      <div className="w-4 h-4 border-2 border-primary-foreground/30 border-t-primary-foreground rounded-full animate-spin" />
+                      <div className="w-4 h-4 border-2 border-background/30 border-t-background rounded-full animate-spin" />
                       Creating account...
                     </div>
                   ) : (
-                    "Create OMNIX Account"
+                    "Create Omnix Account"
                   )}
                 </Button>
               </form>
@@ -217,8 +223,8 @@ export const AuthForm = ({ onLogin }: AuthFormProps) => {
             <p className="text-xs text-muted-foreground">Secure</p>
           </div>
           <div className="space-y-2">
-            <div className="p-2 rounded-lg bg-success/10 w-fit mx-auto">
-              <Brain className="h-5 w-5 text-success" />
+            <div className="p-2 rounded-lg bg-success/10 w-fit mx-auto border border-success/20">
+              <Sparkles className="h-5 w-5 text-success" />
             </div>
             <p className="text-xs text-muted-foreground">Smart</p>
           </div>
