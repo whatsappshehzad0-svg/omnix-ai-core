@@ -16,8 +16,8 @@ export const useTextToSpeech = () => {
       setIsSpeaking(true);
       console.log('Generating speech for:', text.substring(0, 50));
 
-      // Call ElevenLabs TTS edge function
-      const { data, error } = await supabase.functions.invoke('eleven-labs-tts', {
+      // Call OpenAI TTS edge function
+      const { data, error } = await supabase.functions.invoke('openai-tts', {
         body: { text }
       });
 

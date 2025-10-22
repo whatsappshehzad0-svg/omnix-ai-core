@@ -80,10 +80,10 @@ export const useVoiceRecording = () => {
               return;
             }
 
-            console.log('Sending audio to ElevenLabs STT...');
+            console.log('Sending audio to OpenAI Whisper...');
 
-            // Send to ElevenLabs Speech-to-Text
-            const { data, error } = await supabase.functions.invoke('eleven-labs-stt', {
+            // Send to OpenAI Speech-to-Text
+            const { data, error } = await supabase.functions.invoke('openai-stt', {
               body: { audio: base64Audio }
             });
 
