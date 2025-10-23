@@ -10,12 +10,14 @@ import {
   Search, 
   Volume2,
   VolumeX,
-  Sparkles
+  Sparkles,
+  Zap
 } from "lucide-react";
 import { ChatMessage } from "@/components/ChatMessage";
 import { ChatSidebar } from "@/components/ChatSidebar";
 import { useVoiceRecording } from "@/hooks/useVoiceRecording";
 import { useTextToSpeech } from "@/hooks/useTextToSpeech";
+import { useStreamingChat } from "@/hooks/useStreamingChat";
 import { UnifiedInput } from "@/components/UnifiedInput";
 import { toast as sonnerToast } from 'sonner';
 
@@ -37,6 +39,8 @@ export const ChatInterface = ({ selectedMode }: ChatInterfaceProps) => {
   const [isTyping, setIsTyping] = useState(false);
   const [autoSpeak, setAutoSpeak] = useState(true);
   const [uploadedFiles, setUploadedFiles] = useState<Array<{name: string, type: string, content: any}>>([]);
+  const [streamingResponse, setStreamingResponse] = useState('');
+  const [useStreaming, setUseStreaming] = useState(true);
   
   // Image generation states
   const [imagePrompt, setImagePrompt] = useState('');
@@ -48,6 +52,7 @@ export const ChatInterface = ({ selectedMode }: ChatInterfaceProps) => {
   const { toast } = useToast();
   const { isRecording, isProcessing, startRecording, stopRecording } = useVoiceRecording();
   const { speak, stop: stopSpeaking, isSpeaking } = useTextToSpeech();
+  const { sendStreamingMessage, isStreaming } = useStreamingChat();
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -133,6 +138,19 @@ export const ChatInterface = ({ selectedMode }: ChatInterfaceProps) => {
     setInput("");
     setUploadedFiles([]);
     setIsTyping(true);
+    setStreamingResponse('');
+
+    // Create placeholder message for streaming
+    const aiMessageId = (Date.now() + 1).toString();
+    const placeholderMessage: Message = {
+      id: aiMessageId,
+      content: '',
+      role: 'assistant',
+      timestamp: new Date(),
+      mode: selectedMode || undefined
+    };
+    
+    setMessages(prev => [...prev, placeholderMessage]);
 
     try {
       const conversationHistory = messages.map(msg => ({
@@ -140,34 +158,76 @@ export const ChatInterface = ({ selectedMode }: ChatInterfaceProps) => {
         content: msg.content
       }));
 
-      const { data, error } = await supabase.functions.invoke('ai-chat', {
-        body: {
-          message: currentInput || 'Please analyze this document.',
+      if (useStreaming) {
+        await sendStreamingMessage(
+          currentInput || 'Please analyze this document.',
+          conversationHistory,
+          selectedMode,
           fileContent,
-          conversationHistory: conversationHistory
+          {
+            onToken: (token) => {
+              setStreamingResponse(prev => {
+                const newContent = prev + token;
+                setMessages(msgs => 
+                  msgs.map(m => 
+                    m.id === aiMessageId 
+                      ? { ...m, content: newContent }
+                      : m
+                  )
+                );
+                return newContent;
+              });
+            },
+            onComplete: async (fullResponse) => {
+              setIsTyping(false);
+              setStreamingResponse('');
+              
+              if (autoSpeak && fullResponse) {
+                try {
+                  await speak(fullResponse);
+                } catch (voiceError) {
+                  console.error('Error playing voice response:', voiceError);
+                }
+              }
+            },
+            onError: (error) => {
+              throw error;
+            }
+          }
+        );
+      } else {
+        // Non-streaming fallback
+        const { data, error } = await supabase.functions.invoke('ai-chat', {
+          body: {
+            message: currentInput || 'Please analyze this document.',
+            fileContent,
+            conversationHistory,
+            mode: selectedMode,
+            stream: false
+          }
+        });
+
+        if (error) {
+          throw new Error(error.message || 'Failed to get AI response');
         }
-      });
 
-      if (error) {
-        throw new Error(error.message || 'Failed to get AI response');
-      }
-
-      const aiResponse: Message = {
-        id: (Date.now() + 1).toString(),
-        content: data.response,
-        role: 'assistant',
-        timestamp: new Date(),
-        mode: selectedMode || undefined
-      };
-
-      setMessages(prev => [...prev, aiResponse]);
-      
-      if (autoSpeak && data.response) {
-        try {
-          await speak(data.response);
-        } catch (voiceError) {
-          console.error('Error playing voice response:', voiceError);
+        setMessages(msgs => 
+          msgs.map(m => 
+            m.id === aiMessageId 
+              ? { ...m, content: data.response }
+              : m
+          )
+        );
+        
+        if (autoSpeak && data.response) {
+          try {
+            await speak(data.response);
+          } catch (voiceError) {
+            console.error('Error playing voice response:', voiceError);
+          }
         }
+        
+        setIsTyping(false);
       }
       
     } catch (error: any) {
@@ -179,18 +239,34 @@ export const ChatInterface = ({ selectedMode }: ChatInterfaceProps) => {
         variant: "destructive",
       });
 
-      const errorMessage: Message = {
-        id: (Date.now() + 1).toString(),
-        content: "I apologize, but I'm having trouble processing your request right now. Please try again.",
-        role: 'assistant',
-        timestamp: new Date(),
-        mode: selectedMode || undefined
-      };
+      setMessages(msgs => 
+        msgs.map(m => 
+          m.id === aiMessageId 
+            ? { ...m, content: "I apologize, but I'm having trouble processing your request right now. Please try again." }
+            : m
+        )
+      );
       
-      setMessages(prev => [...prev, errorMessage]);
-    } finally {
       setIsTyping(false);
     }
+  };
+
+  const exportConversation = () => {
+    const conversationText = messages.map(m => 
+      `[${m.timestamp.toLocaleString()}] ${m.role === 'user' ? 'You' : 'OMNIX'}:\n${m.content}\n`
+    ).join('\n');
+    
+    const blob = new Blob([conversationText], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `omnix-chat-${new Date().toISOString().split('T')[0]}.txt`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    
+    sonnerToast.success('Conversation exported successfully');
   };
 
   const toggleVoiceInput = async () => {
@@ -308,6 +384,12 @@ export const ChatInterface = ({ selectedMode }: ChatInterfaceProps) => {
                   {selectedMode.replace('-', ' ')}
                 </Badge>
               )}
+              {useStreaming && (
+                <Badge variant="secondary" className="bg-accent/10 text-accent border-accent/20">
+                  <Zap className="h-3 w-3 mr-1" />
+                  Streaming
+                </Badge>
+              )}
               <Button 
                 variant="ghost" 
                 size="sm"
@@ -317,10 +399,21 @@ export const ChatInterface = ({ selectedMode }: ChatInterfaceProps) => {
               >
                 {autoSpeak ? <Volume2 className="h-4 w-4" /> : <VolumeX className="h-4 w-4" />}
               </Button>
-              <Button variant="ghost" size="sm">
-                <Search className="h-4 w-4" />
+              <Button 
+                variant="ghost" 
+                size="sm"
+                onClick={() => setUseStreaming(!useStreaming)}
+                title={useStreaming ? "Disable streaming" : "Enable streaming"}
+                className={useStreaming ? "text-accent" : "text-muted-foreground"}
+              >
+                <Zap className="h-4 w-4" />
               </Button>
-              <Button variant="ghost" size="sm">
+              <Button 
+                variant="ghost" 
+                size="sm"
+                onClick={exportConversation}
+                title="Export conversation"
+              >
                 <Download className="h-4 w-4" />
               </Button>
             </div>
@@ -335,14 +428,16 @@ export const ChatInterface = ({ selectedMode }: ChatInterfaceProps) => {
                 <ChatMessage key={message.id} message={message} />
               ))}
               
-              {isTyping && (
-                <div className="flex items-center space-x-2 p-4 rounded-lg bg-card border border-border/50">
+              {(isTyping || isStreaming) && (
+                <div className="flex items-center space-x-2 p-4 rounded-lg bg-card border border-border/50 animate-pulse">
                   <div className="flex space-x-1">
                     <div className="w-2 h-2 bg-primary rounded-full animate-bounce" />
                     <div className="w-2 h-2 bg-primary rounded-full animate-bounce" style={{ animationDelay: '0.1s' }} />
                     <div className="w-2 h-2 bg-primary rounded-full animate-bounce" style={{ animationDelay: '0.2s' }} />
                   </div>
-                  <span className="text-sm text-muted-foreground">OMNIX is thinking...</span>
+                  <span className="text-sm text-muted-foreground">
+                    {isStreaming ? 'OMNIX is responding...' : 'OMNIX is thinking...'}
+                  </span>
                 </div>
               )}
               

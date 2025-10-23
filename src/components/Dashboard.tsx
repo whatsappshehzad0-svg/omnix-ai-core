@@ -13,52 +13,76 @@ export const Dashboard = () => {
 
   const smartModes = [
     {
-      id: 'summarize',
-      title: '📑 Summarize',
-      description: 'Condense long texts into key points',
-      gradient: 'from-blue-500 to-cyan-500'
-    },
-    {
-      id: 'translate',
-      title: '🌍 Translate',
-      description: 'Convert text between languages',
-      gradient: 'from-purple-500 to-pink-500'
-    },
-    {
-      id: 'explain-simple',
-      title: '💡 Explain Simple',
-      description: 'Break down complex topics simply',
-      gradient: 'from-green-500 to-emerald-500'
-    },
-    {
-      id: 'explain-deep',
-      title: '📘 Explain Deep',
-      description: 'Detailed technical explanations',
-      gradient: 'from-indigo-500 to-blue-500'
-    },
-    {
       id: 'code',
-      title: '💻 Code Mode',
-      description: 'Programming assistance and debugging',
+      title: '💻 Code Expert',
+      description: 'Programming, debugging & best practices',
       gradient: 'from-orange-500 to-red-500'
     },
     {
-      id: 'calculator',
-      title: '🧮 Calculator',
-      description: 'Advanced mathematical computations',
+      id: 'research',
+      title: '🔬 Research Pro',
+      description: 'In-depth analysis & research',
+      gradient: 'from-blue-500 to-cyan-500'
+    },
+    {
+      id: 'creative',
+      title: '✨ Creative Writer',
+      description: 'Stories, poems & creative content',
+      gradient: 'from-purple-500 to-pink-500'
+    },
+    {
+      id: 'business',
+      title: '💼 Business Advisor',
+      description: 'Strategy, analysis & ROI insights',
+      gradient: 'from-green-500 to-emerald-500'
+    },
+    {
+      id: 'explain-simple',
+      title: '💡 Simple Explainer',
+      description: 'Break down complex topics',
+      gradient: 'from-yellow-500 to-orange-500'
+    },
+    {
+      id: 'explain-deep',
+      title: '📘 Deep Dive',
+      description: 'Technical & detailed analysis',
+      gradient: 'from-indigo-500 to-blue-500'
+    },
+    {
+      id: 'translate',
+      title: '🌍 Translator',
+      description: 'Multi-language translation',
       gradient: 'from-teal-500 to-cyan-500'
     },
     {
-      id: 'news',
-      title: '📰 News',
-      description: 'Latest updates and current events',
-      gradient: 'from-red-500 to-pink-500'
+      id: 'summarize',
+      title: '📑 Summarizer',
+      description: 'Condense long texts efficiently',
+      gradient: 'from-pink-500 to-rose-500'
     },
     {
-      id: 'weather',
-      title: '☁️ Weather',
-      description: 'Weather forecasts and conditions',
-      gradient: 'from-sky-500 to-blue-500'
+      id: 'calculator',
+      title: '🧮 Math Solver',
+      description: 'Complex calculations & equations',
+      gradient: 'from-violet-500 to-purple-500'
+    },
+    {
+      id: 'tutor',
+      title: '📚 Personal Tutor',
+      description: 'Learn any subject step-by-step',
+      gradient: 'from-lime-500 to-green-500'
+    },
+    {
+      id: 'consultant',
+      title: '🎯 AI Consultant',
+      description: 'Expert advice & recommendations',
+      gradient: 'from-amber-500 to-yellow-500'
+    },
+    {
+      id: 'assistant',
+      title: '🤖 General Assistant',
+      description: 'All-purpose AI helper',
+      gradient: 'from-slate-500 to-gray-500'
     }
   ];
 
@@ -155,22 +179,22 @@ export const Dashboard = () => {
 
             {/* Quick Stats */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-12">
-              <Card className="p-6 glass border-border/50">
+              <Card className="p-6 glass border-border/50 hover:scale-105 transition-transform">
                 <div className="text-center space-y-2">
-                  <div className="text-3xl font-bold text-primary">8</div>
-                  <div className="text-sm text-muted-foreground">Smart Modes Available</div>
+                  <div className="text-3xl font-bold text-primary">12</div>
+                  <div className="text-sm text-muted-foreground">Specialized AI Modes</div>
                 </div>
               </Card>
-              <Card className="p-6 glass border-border/50">
+              <Card className="p-6 glass border-border/50 hover:scale-105 transition-transform">
                 <div className="text-center space-y-2">
                   <div className="text-3xl font-bold text-accent">∞</div>
-                  <div className="text-sm text-muted-foreground">Possibilities Ahead</div>
+                  <div className="text-sm text-muted-foreground">Unlimited Possibilities</div>
                 </div>
               </Card>
-              <Card className="p-6 glass border-border/50">
+              <Card className="p-6 glass border-border/50 hover:scale-105 transition-transform">
                 <div className="text-center space-y-2">
                   <div className="text-3xl font-bold text-success">24/7</div>
-                  <div className="text-sm text-muted-foreground">Always Available</div>
+                  <div className="text-sm text-muted-foreground">Always Ready to Help</div>
                 </div>
               </Card>
             </div>

@@ -13,6 +13,7 @@ import {
   Volume2
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { MarkdownMessage } from "./MarkdownMessage";
 
 interface Message {
   id: string;
@@ -101,9 +102,15 @@ export const ChatMessage = ({ message }: ChatMessageProps) => {
             ? "chat-bubble-user rounded-tr-sm" 
             : "chat-bubble-ai rounded-tl-sm"
         )}>
-          <p className="text-sm leading-relaxed whitespace-pre-wrap">
-            {message.content}
-          </p>
+          {isUser ? (
+            <p className="text-sm leading-relaxed whitespace-pre-wrap">
+              {message.content}
+            </p>
+          ) : (
+            <div className="text-sm leading-relaxed">
+              <MarkdownMessage content={message.content} />
+            </div>
+          )}
         </div>
 
         {/* Actions */}
